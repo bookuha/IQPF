@@ -10,6 +10,7 @@ open Microsoft.Extensions.DependencyInjection
 open Giraffe
 open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.Hosting
+open Npgsql.FSharp
 
 let mutable inMemoryDb: Question array = [||]
 
@@ -61,10 +62,15 @@ let webApp =
     ]
 
 let configureApp (app : IApplicationBuilder) =
-    Dapper.FSharp.PostgreSQL.OptionTypes.register()
     
     let connectionString =
-        "Server=127.0.0.1;Port=5432;Database=IQPF;User Id=postgres;Password=oreooreo12;"
+        Sql.host (Environment.GetEnvironmentVariable "POSTGRES_HOST")
+        |> Sql.database (Environment.GetEnvironmentVariable "POSTGRES_DATABASE")
+        |> Sql.username (Environment.GetEnvironmentVariable "POSTGRES_USER")
+        |> Sql.password (Environment.GetEnvironmentVariable "POSTGRES_PASSWORD")
+        |> Sql.trustServerCertificate true
+        |> Sql.formatConnectionString
+        |> (+) "Pooling=false;"
         
     EnsureDatabase.For.PostgresqlDatabase(connectionString);    
         
