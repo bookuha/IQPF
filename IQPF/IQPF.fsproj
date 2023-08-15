@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net7.0</TargetFramework>
+        <AssemblyName>IQPF.App</AssemblyName>
+        <EnableDefaultContentItems>false</EnableDefaultContentItems>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Dapper.FSharp" Version="4.6.1" />
+      <PackageReference Include="dbup-postgresql" Version="5.0.8" />
+      <PackageReference Include="Giraffe" Version="6.2.0" />
+      <PackageReference Include="Npgsql" Version="7.0.4" />
+      <PackageReference Include="Npgsql.FSharp" Version="5.7.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Include="Questions.fs" />
+        <Compile Include="Database.fs" />
+        <Compile Include="Program.fs" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="web.config" CopyToOutputDirectory="PreserveNewest" />
+        <Content Include="WebRoot\**\*">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Include="Scripts\01 - CreateQuestionTable.sql" />
+      <EmbeddedResource Include="Scripts\00 - Setup.sql" />
+    </ItemGroup>
+</Project>
