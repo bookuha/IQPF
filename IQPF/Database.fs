@@ -6,9 +6,6 @@ open IQPF.Questions
 open Npgsql
 open Npgsql.FSharp
 
-[<CLIMutable>]
-type questionDbDto = { question_id: Guid option; title: string; description: string; added: DateTime option }
-
 type SqlOrder =
     | Ascending = 0
     | Descending = 1
@@ -39,9 +36,6 @@ type FetchDbResult<'a> =
 
 [<AbstractClass; Sealed>]   
 type QuestionRepo private () =
-    static let bindToQuestionDbDto (question: Question) =
-        { question_id = None; title = question.title; description = question.description; added = None }
-          
     static let conn =
         Sql.host (Environment.GetEnvironmentVariable "POSTGRES_HOST")
         |> Sql.database (Environment.GetEnvironmentVariable "POSTGRES_DATABASE")
