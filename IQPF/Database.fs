@@ -101,7 +101,7 @@ type QuestionRepo private () =
 
         
         
-    static member updateQuestionById (id: Guid, question: Question) : UpdateDbResult<Task<Question list>> =
+    static member updateQuestionById (id: Guid) (question: Question) : UpdateDbResult<Task<Question list>> =
         try
             conn
             |> Sql.connect

@@ -51,16 +51,53 @@ let createQuestionHandler: HttpHandler =
             | InsertDbResult.UniqueViolation -> return! RequestErrors.conflict ("Record with such id already exists" |> json) next ctx
             | InsertDbResult.Error -> return! ServerErrors.internalError ("Database error" |> json) next ctx
         }
+        
+let updateQuestionHandler (id: Guid) : HttpHandler =
+    fun (next: HttpFunc) (ctx: HttpContext) ->
+        task {
+            let! questionDto = ctx.BindJsonAsync<PostQuestionDTO>()
+            
+            let question = bindDtoToQuestion questionDto
+            
+            let result = QuestionRepo.updateQuestionById id question
+            
+            match result with
+            | UpdateDbResult.Success task ->
+                let! question = task
+                let response = question |> json
+                return! Successful.ok(response) next ctx
+            | UpdateDbResult.NoDataFound -> return! RequestErrors.conflict ("No data found" |> json) next ctx    
+            | UpdateDbResult.UniqueViolation -> return! RequestErrors.conflict ("Record with such id already exists" |> json) next ctx
+            | UpdateDbResult.Error -> return! ServerErrors.internalError ("Database error" |> json) next ctx
+            
+        }
+    
+let deleteQuestionHandler (id: Guid) : HttpHandler =
+    fun (next: HttpFunc) (ctx: HttpContext) ->
+        task {
+            
+            let result = QuestionRepo.deleteQuestionById id
+            
+            match result with
+            | DeleteDbResult.Success task ->
+                let! question = task
+                let response = question |> json
+                return! Successful.ok(response) next ctx
+            | DeleteDbResult.NoDataFound -> return! RequestErrors.conflict ("No data found" |> json) next ctx    
+            | DeleteDbResult.Error -> return! ServerErrors.internalError ("Database error" |> json) next ctx
+            
+        }    
    
 let webApp =
-    choose [
-        route "/questions" >=> choose [
-            GET >=> warbler (fun _ -> getQuestionsHandler)
-            POST >=> warbler (fun _ -> createQuestionHandler)
-        ]
-        RequestErrors.NOT_FOUND "Not Found"
-    ]
-
+        subRoute "/questions" (choose [
+            GET >=> getQuestionsHandler
+            POST >=> createQuestionHandler
+            PUT >=> routef "/%O" updateQuestionHandler
+            DELETE >=> routef "/%O" deleteQuestionHandler
+            
+            RequestErrors.NOT_FOUND "Not Found"
+        ])
+        
 let configureApp (app : IApplicationBuilder) =
     
     let connectionString =
