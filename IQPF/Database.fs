@@ -24,8 +24,8 @@ type InsertDbResult<'a> =
     | Error
 
 [<RequireQualifiedAccess>]             
-type DeleteDbResult<'a> =
-    | Success of 'a
+type DeleteDbResult =
+    | Success
     | NoDataFound
     | Error
 
@@ -122,21 +122,22 @@ type QuestionRepo private () =
         
         
         
-    static member deleteQuestionById (id: Guid) : DeleteDbResult<Task<Question list>> =
+    static member deleteQuestionById (id: Guid) : Task<DeleteDbResult> =
         try
-            conn
-            |> Sql.connect
-            |> Sql.query "DELETE FROM questions
-                          WHERE question_id = @id"
-            |> Sql.parameters [ "id", Sql.uuid id ]
-            |> Sql.executeAsync (fun read ->
-                { id = read.uuidOrNone "question_id"
-                  title = read.string "title"
-                  description = read.string "description"
-                  added = read.dateTimeOrNone "added" })
-            |> DeleteDbResult.Success
+            task {
+                let! deleted =
+                    conn
+                    |> Sql.connect
+                    |> Sql.query "DELETE FROM questions
+                                  WHERE question_id = @id"
+                    |> Sql.parameters [ "id", Sql.uuid id ]
+                    |> Sql.executeNonQueryAsync
+                
+                return match deleted with
+                        | 1 -> DeleteDbResult.Success
+                        | 0 -> DeleteDbResult.NoDataFound
+                        | _ -> DeleteDbResult.Error    
+           }
         with
-            | :? PostgresException as ex when ex.ErrorCode = 02000 -> DeleteDbResult.NoDataFound
-            | _ -> DeleteDbResult.Error
-        
-       
+            | :? PostgresException as ex when ex.ErrorCode = 02000 -> Task.FromResult DeleteDbResult.NoDataFound
+            | _ -> Task.FromResult DeleteDbResult.Error

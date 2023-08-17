@@ -76,12 +76,11 @@ let deleteQuestionHandler (id: Guid) : HttpHandler =
     fun (next: HttpFunc) (ctx: HttpContext) ->
         task {
             
-            let result = QuestionRepo.deleteQuestionById id
+            let! result = QuestionRepo.deleteQuestionById id
             
             match result with
-            | DeleteDbResult.Success task ->
-                let! question = task
-                let response = question |> json
+            | DeleteDbResult.Success ->
+                let response = "The record has been successfully deleted!" |> json
                 return! Successful.ok(response) next ctx
             | DeleteDbResult.NoDataFound -> return! RequestErrors.conflict ("No data found" |> json) next ctx    
             | DeleteDbResult.Error -> return! ServerErrors.internalError ("Database error" |> json) next ctx
